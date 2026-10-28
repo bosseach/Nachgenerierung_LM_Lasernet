@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import tkinter as tk
 import logging
+import requests
 
 # Import eigene Funktionen
 from core_services.constants import RESTHOST_PROD,HEADERS_PROD
@@ -90,9 +91,39 @@ def choose_BestellID(
 
     return info_bestellid
 
+def choose_Kündigungsgrund(
+    logger,
+    custom_bestellID,
+    button_bestellID,
+    file_entry_bestellid,
+    lable_choose_bestellid,
+    info_bestellid
+):
+    logger.info(f'Custom BestellID gewählt: {custom_bestellID.get()}')
+    button_bestellID['state'] = tk.NORMAL
+    file_entry_bestellid.grid(row=15, column=1)
+    lable_choose_bestellid.grid(row=14, column=1)
+    info_bestellid.set(1)
+
+    return info_bestellid
+
+def clear_kündigungsgrund(
+    choose_kunGrund,
+    logger
+):
+    #list_bestell2 = choose_kunGrund.get().split(',')
+    #list_bestell2 = choose_kunGrund.get()
+    #for item in list_bestell2:
+    #    listbox_uebersicht.insert(tk.END, item)
+
+    logger.info(f'Kündigungsgrund gespeichert:{choose_kunGrund.get()}')
+    #logger.info(f'listbox:{list(listbox_uebersicht.get(0, tk.END))}')
+    #logger.info('Kündigungsgrund ist gespeichert')
+    #choose_kunGrund.set('')
+
 def Save_entry(
     choose_id,
-    listbox2,
+    listbox_uebersicht,
     info_TESTcase,
     custom_TestID,
     auswahl_dropdown,
@@ -114,7 +145,8 @@ def Save_entry(
     list_subscriptions = choose_id.get().split(',')
 
     try:
-        kuen_var = str(listbox2.get(0, tk.END)[0])
+        #kuen_var = str(listbox_uebersicht.get(0, tk.END)[0])
+        kuen_var = choose_kunGrund.get()
     except:
         kuen_var = ''
 
@@ -149,7 +181,7 @@ def Save_entry(
     Versand_entry.set('Nein')
     choose_kunGrund.set('')
     new_bestellid.set(0)
-    listbox2.delete(0, tk.END)
+    listbox_uebersicht.delete(0, tk.END)
 
     file_entry_test.grid_remove()
     lable_choose.grid_remove()
@@ -160,22 +192,8 @@ def Save_entry(
 
     try:
         pass
-        #showdata(listbox_data, shared_data)
     except NameError:
         pass
-
-def clear_kündigungsgrund(
-    choose_kunGrund,
-    listbox2,
-    logger
-):
-    list_bestell2 = choose_kunGrund.get().split(',')
-    for item in list_bestell2:
-        listbox2.insert(tk.END, item)
-
-    logger.info(f'listbox:{list(listbox2.get(0, tk.END))}')
-    logger.info('Kündigungsgrund ist gespeichert')
-    choose_kunGrund.set('')
 
 def update_state(
     auswahl_dropdown,
@@ -221,6 +239,41 @@ def open_dokumentation():
 def data_folder(folder_data, filedialog):
     folder_data.set(filedialog.askdirectory())
 
+def showdata_treeview(treeview_data, shared_data):
+    """
+    Befüllt ein ttk.Treeview mit den Daten aus shared_data.
+    """
+    # treeview als anzuzeigendes Objekt, shared Data als Daten
+    # Löschen der bisherigen Anzeige
+    #if type(treeview_data) != 'NoneType':
+    if treeview_data == None:
+        pass
+    else:
+        for item in treeview_data.get_children():
+                treeview_data.delete(item)
+
+    # Keine Einträge vorhanden
+    if not shared_data:
+            treeview_data.insert("",
+                                tk.END,
+                                values=("Keine Einträge vorhanden"))
+            return
+    
+    # Dictionary-Daten als Tabellenzeilen einfügen
+    for item in shared_data:
+        treeview_data.insert(
+            "",
+            tk.END,
+            values=(
+                item.get("Nr", ""),
+                item.get("Typ", ""),
+                len(item.get("list_subscriptions", [])),
+                item.get("Change_accountID", ""),
+                item.get("Versand_unterdrücken", ""),
+                item.get("Kuendigungsgrund", "")
+            )
+        )
+        
 def showdata(listbox_data, shared_data):
     listbox_data.delete(0, tk.END)
 
@@ -256,7 +309,10 @@ def Generiere_Reports(
         check_df = 0
 
         for item in shared_data:
-            df_sub, dict_email = Allg_Verarbeitung(item)
+            df_sub, dict_email = Allg_Verarbeitung(item,
+                                                   logger,
+                                                   item['custom_bestellID']
+                                                    )
 
             if item['info_bestellid'] != 0:
                 df_sub = Umwandeln_BestellID(df_sub, item['custom_bestellID'])
@@ -338,7 +394,7 @@ def Umwandeln_BestellID(df_sub, new_id):
 
     return df_sub
 
-def get_api_call(url, HEADERS_PROD, requests, logging, choose_header=None):
+def get_api_call(url, HEADERS_PROD, logging, choose_header=None):
     if choose_header is None:
         choose_header = HEADERS_PROD
 
@@ -389,11 +445,11 @@ def Allg_Verarbeitung(
 
     for item_acc in list(df_sub['AccountId'].unique()):
         url_acc = f"{RESTHOST_PROD}accounts/{item_acc}"
-        response_acc = get_api_call(url_acc)
+        response_acc = get_api_call(url_acc,HEADERS_PROD,logger)
         dict_email[item_acc] = response_acc['email']
 
         url_sub = f"{RESTHOST_PROD}accounts/{item_acc}/subscriptions"
-        response_sub = get_api_call(url_sub)
+        response_sub = get_api_call(url_sub,HEADERS_PROD,logger)
 
         for sub in response_sub:
             df_sub.loc[
@@ -421,9 +477,10 @@ def Allg_Verarbeitung(
         else:
             logger.error('Keine gültige PayerID!')
 
+    # Custom Bestellid hinzufügen
     if item['info_bestellid'] == 1:
-        if len(custom_bestellID.get()) != 0:
-            df_sub['BestellId'] = custom_bestellID.get()
+        if len(custom_bestellID) != 0:
+            df_sub['BestellId'] = custom_bestellID
             logger.info('Custom BestellID ist eingebaut')
         else:
             logger.error('Keine gültige BestellID eingegeben')
