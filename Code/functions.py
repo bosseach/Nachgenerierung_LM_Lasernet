@@ -26,40 +26,43 @@ from core_services.db import execute_sql_query
 # Aufträge erstellen
 # ======================================================================================
 
-def Button_Aktivieren(
-    test_entry,
-    lable_choose,
-    file_entry_test,
-    button_testID,
-    new_bestellid,
-    button_bestellID,
-    file_entry_bestellid,
-    lable_choose_bestellid
-):
-
+def Button_Aktivieren(dict,logger):
+    '''
+    Steuert die Anzeige Änderungsoptionen an den Subscriptions
+    '''
     # Neue Testfälle
-    if test_entry.get() == 1:
-        lable_choose.grid(row=9, column=1)
-        file_entry_test.grid(row=10, column=1)
-        button_testID.grid(row=10, column=2)
-    else:  # Alle Funktionen zurücksetzen
-        file_entry_test.grid_remove()
-        lable_choose.grid_remove()
-        button_testID.grid_remove()
+    if dict['var_check'].get() == 1:
+        dict['lable']['Name'].grid(row=dict['lable']['row'], column=dict['lable']['column'])
+        dict['file_entry']['Name'].grid(row=dict['file_entry']['row'], column=dict['file_entry']['column'])
+        dict['button']['Name'].grid(row=dict['button']['row'], column=dict['button']['column'])
+    else:  
+        # Alle Funktionen zurücksetzen
+        dict['file_entry']['Name'].grid_remove()
+        dict['lable']['Name'].grid_remove()
+        dict['button']['Name'].grid_remove()
+        # variable zurück auf Standard setzen
+        dict['variable'].set('')
+        logger.info(f'{dict['var_name']} ist zurückgesetzt')
 
-    # Neue BestellID
-    if new_bestellid.get() == 1:
-        button_bestellID.grid(row=15, column=2)
-        file_entry_bestellid.grid(row=15, column=1)
-        lable_choose_bestellid.grid(row=14, column=1)
-    else:
-        button_bestellID.grid_remove()
-        file_entry_bestellid.grid_remove()
-        lable_choose_bestellid.grid_remove()
 
-    return test_entry
+dic_option={}
 
-def choose_testID(
+
+def Set_variable_option(
+    logger,
+    var_name,
+    var_entry,
+    var_button,
+    var_info
+    ):
+    '''
+    Abspeichern der Feldänderungen
+    '''
+    logger.info(f'{var_name} gewählt: {var_entry.get()}')
+    var_button['state'] = tk.NORMAL
+    var_info.set(1)
+
+def choose_accountid_alt(
     logger,
     custom_TestID,
     button_testID,
@@ -75,7 +78,23 @@ def choose_testID(
 
     return info_TESTcase
 
-def choose_BestellID(
+def choose_BestellID_alt(
+    logger,
+    custom_bestellID,
+    button_bestellID,
+    file_entry_bestellid,
+    lable_choose_bestellid,
+    info_bestellid
+):
+    logger.info(f'Custom BestellID gewählt: {custom_bestellID.get()}')
+    button_bestellID['state'] = tk.NORMAL
+    #file_entry_bestellid.grid(row=15, column=1)
+    #lable_choose_bestellid.grid(row=14, column=1)
+    #info_bestellid.set(1)
+
+    return info_bestellid
+
+def choose_Kündigungsgrund_alt(
     logger,
     custom_bestellID,
     button_bestellID,
@@ -91,23 +110,7 @@ def choose_BestellID(
 
     return info_bestellid
 
-def choose_Kündigungsgrund(
-    logger,
-    custom_bestellID,
-    button_bestellID,
-    file_entry_bestellid,
-    lable_choose_bestellid,
-    info_bestellid
-):
-    logger.info(f'Custom BestellID gewählt: {custom_bestellID.get()}')
-    button_bestellID['state'] = tk.NORMAL
-    file_entry_bestellid.grid(row=15, column=1)
-    lable_choose_bestellid.grid(row=14, column=1)
-    info_bestellid.set(1)
-
-    return info_bestellid
-
-def clear_kündigungsgrund(
+def clear_kündigungsgrund_alt(
     choose_kunGrund,
     logger
 ):
@@ -122,10 +125,98 @@ def clear_kündigungsgrund(
     #choose_kunGrund.set('')
 
 def Save_entry(
+    # Bestellungen/Logger
+    subscriptionid,
+    auswahl_dropdown,
+    shared_data,
+    logger,
+    # Felderänderungen
+    info_payerid,
+    custom_payerid,
+    info_bestellid,
+    custom_bestellID,
+    info_kündigungsgrund,
+    custom_kündigunsgrund,
+    Versand_entry,
+    # Zurücksetzen der GUI
+    file_entry_test,
+    lable_choose,
+    button_testID,
+    file_entry_bestellid,
+    lable_choose_bestellid,
+    button_bestellID,
+    file_entry_kuen,
+    file_button_kuen,
+    label_kuen
+):
+    '''
+    Funktion ermöglicht das Abspeichern der eingetragenen Subscriptions inkl. der ausgewählten Änderungen
+    '''
+    list_subscriptions = subscriptionid.get().split(',')
+    
+    #### Feldänderungen 
+    # Kündigungen
+    if info_kündigungsgrund.get()==1:
+        new_kündigungsgrund = custom_kündigunsgrund.get()
+    else:
+        new_kündigungsgrund=''
+    # Neue PayerID
+    if info_payerid.get() == 1:
+        new_payer_id = custom_payerid.get()
+    else:
+        new_payer_id = ''
+    # neue Bestellid
+    if info_bestellid.get()==1:
+        new_bestellid=custom_bestellID.get()
+
+    # Neue Eintragungen
+    new_entry = {
+        'Typ': auswahl_dropdown.get(),
+        'Nr': len(shared_data) + 1,
+        'list_subscriptions': list_subscriptions,
+        'test_entry': 'asd',
+        'info_TESTcase': 'asd',
+        'Change_accountID': new_payer_id,
+        'info_bestellid': 'asd',
+        'custom_bestellID': new_bestellid,
+        'Versand_unterdrücken': Versand_entry.get(),
+        'Kuendigungsgrund': new_kündigungsgrund
+    }
+    shared_data.append(new_entry)
+
+    # Logger
+    logger.info(f'############# BestellIDs: {shared_data} hinzugefügt #############')
+    logger.info('BestellIDs sind gespeichert')
+
+    # Bereinigen der Variablen
+    subscriptionid.set('')
+    info_payerid.set(0)
+    custom_payerid.set(5513755201)
+    info_bestellid.set(0)
+    custom_bestellID.set('')
+    custom_kündigunsgrund.set('')
+    Versand_entry.set('')
+
+    # Verdecken der Felder
+    file_entry_test.grid_remove()
+    lable_choose.grid_remove()
+    button_testID.grid_remove()
+    file_entry_bestellid.grid_remove()
+    lable_choose_bestellid.grid_remove()
+    button_bestellID.grid_remove()
+    file_entry_kuen.grid_remove()
+    file_button_kuen.grid_remove()
+    label_kuen.grid_remove()
+
+    try:
+        pass
+    except NameError:
+        pass
+
+def Save_entry_old(
     choose_id,
-    listbox_uebersicht,
-    info_TESTcase,
-    custom_TestID,
+    info_payerid,
+    custom_payerid,
     auswahl_dropdown,
     shared_data,
     test_entry,
@@ -142,26 +233,32 @@ def Save_entry(
     lable_choose_bestellid,
     button_bestellID
 ):
+    '''
+    Funktion ermöglicht das Abspeichern der eingetragenen Subscriptions inkl. der ausgewählten Änderungen
+    '''
     list_subscriptions = choose_id.get().split(',')
-
+    
+    #### Feldänderungen 
+    # Kündigungen
     try:
-        #kuen_var = str(listbox_uebersicht.get(0, tk.END)[0])
         kuen_var = choose_kunGrund.get()
     except:
         kuen_var = ''
-
-    if info_TESTcase.get() == 1:
-        test_ID = custom_TestID.get()
+    # Neue PayerID
+    if info_payerid.get() == 1:
+        new_payer_id = custom_payerid.get()
     else:
-        test_ID = ''
+        new_payer_id = ''
+    # neue Bestellid
 
+    # Neue Eintragungen
     new_entry = {
         'Typ': auswahl_dropdown.get(),
         'Nr': len(shared_data) + 1,
         'list_subscriptions': list_subscriptions,
         'test_entry': test_entry.get(),
-        'info_TESTcase': info_TESTcase.get(),
-        'Change_accountID': test_ID,
+        'info_TESTcase': info_payerid.get(),
+        'Change_accountID': new_payer_id,
         'info_bestellid': info_bestellid.get(),
         'custom_bestellID': custom_bestellID.get(),
         'Versand_unterdrücken': Versand_entry.get(),
@@ -169,20 +266,22 @@ def Save_entry(
     }
     shared_data.append(new_entry)
 
+    # Logger
     logger.info(f'############# BestellIDs: {shared_data} hinzugefügt #############')
     logger.info('BestellIDs sind gespeichert')
 
+    # Bereinigen der Variablen
     choose_id.set('')
     test_entry.set(0)
     info_bestellid.set(0)
-    info_TESTcase.set(0)
-    custom_TestID.set(5513755201)
+    info_payerid.set(0)
+    custom_payerid.set(5513755201)
     custom_bestellID.set('')
-    Versand_entry.set('Nein')
+    Versand_entry.set('')
     choose_kunGrund.set('')
     new_bestellid.set(0)
-    listbox_uebersicht.delete(0, tk.END)
 
+    # Verdecken der Felder
     file_entry_test.grid_remove()
     lable_choose.grid_remove()
     button_testID.grid_remove()
@@ -251,13 +350,6 @@ def showdata_treeview(treeview_data, shared_data):
     else:
         for item in treeview_data.get_children():
                 treeview_data.delete(item)
-
-    # Keine Einträge vorhanden
-    if not shared_data:
-            treeview_data.insert("",
-                                tk.END,
-                                values=("Keine Einträge vorhanden"))
-            return
     
     # Dictionary-Daten als Tabellenzeilen einfügen
     for item in shared_data:

@@ -17,17 +17,20 @@ class AppState:
     """
 
     def __init__(self, root):
-        # Tkinter-Variablen von Seite 1
-        self.test_entry = tk.IntVar(master=root, value=0)
+        # Feldänderungen 
+        self.new_accountid = tk.IntVar(master=root, value=0)                    # variable für Checkbutton
+        self.info_accountid = tk.IntVar(master=root, value=0)                   # variable fürs Abspeichern
+        self.custom_accountid = tk.StringVar(master=root, value="5513755201")   # Input 
+
+        self.new_kündigungsgrund = tk.IntVar(master=root, value=0)
+        self.info_kündigungsgrund = tk.IntVar(master=root, value=0)
+        self.custom_kündigunsgrund = tk.StringVar(master=root, value="")
+
         self.new_bestellid = tk.IntVar(master=root, value=0)
-
-        self.custom_bestellID = tk.StringVar(master=root, value="")
         self.info_bestellid = tk.IntVar(master=root, value=0)
-
-        self.info_TESTcase = tk.IntVar(master=root, value=0)
-        self.custom_TestID = tk.StringVar(master=root, value="5513755201")
-
-        self.Versand_entry = tk.StringVar(master=root, value="Nein")
+        self.custom_bestellID = tk.StringVar(master=root, value="")
+        
+        self.Versand_entry = tk.StringVar(master=root, value="")
 
         # Gemeinsame Daten zwischen Seite 1 und Seite 2
         self.shared_data = []
@@ -116,9 +119,7 @@ def starte_GUI():
     def aktualisiere_uebersicht():
         """Aktualisiert die Übersicht auf Seite 2."""
 
-        if app_state.listbox_uebersicht is not None:
-            func.showdata(app_state.listbox_uebersicht,
-                          app_state.shared_data)
+        if app_state.treeview_uebersicht is not None:
             func.showdata_treeview(app_state.treeview_uebersicht,
                                     app_state.shared_data)
 
@@ -135,7 +136,7 @@ def starte_GUI():
     # Seite 1: Aufträge erstellen
     # ===============================================
     def Auftraege_erstellen(notebook_widget):
-
+        # Erstellen des Frames
         frame = ttk.Frame(notebook_widget, padding=15)
         notebook_widget.add(frame, text="Dokumente erstellen")
 
@@ -164,6 +165,7 @@ def starte_GUI():
         # ==================
         choose_id = tk.StringVar(master=root)
 
+        # Label
         label_bestellid = ttk.Label(
             frame,
             text=(
@@ -173,6 +175,7 @@ def starte_GUI():
         )
         label_bestellid.grid(row=4, column=1, pady=(10, 2))
 
+        # Eingabe
         file_entry = ttk.Entry(
             frame,
             textvariable=choose_id,
@@ -206,57 +209,59 @@ def starte_GUI():
         dropdown.grid(row=6, column=2, padx=5, sticky="ew")
 
         # ==================
-        # Test-ID Widgets
+        # Neue Accountid
         # ==================
+        #### Checkbutton Sichtbarkeit der Funktion einstellen ####
+        checkbutton_accountid = ttk.Checkbutton(
+                                    frame,
+                                    text="Neue PayerID",
+                                    variable=app_state.new_accountid,
+                                    bootstyle="primary-round-toggle",
+                                    command=lambda: func.Button_Aktivieren({'var_name':'Neue PayerID',
+                                                                            'var_check':app_state.new_accountid,
+                                                                            'lable':{'Name':label_choose,'row':7,'column':1},
+                                                                            'file_entry':{'Name':file_entry_test,'row':8,'column':1},
+                                                                            'button':{'Name':button_accountid,'row':8,'column':2},
+                                                                            'variable':app_state.custom_accountid
+                                                                            },app_state.logger)
+                                )
+        checkbutton_accountid.grid(row=4, column=0, padx=0, sticky="w")
+
+        #### Funktion bei Sichtbarkeit = Ja ####
+        # Eingabefeld
         file_entry_test = ttk.Entry(
             frame,
-            textvariable=app_state.custom_TestID,
+            textvariable=app_state.custom_accountid,
             width=50
         )
         file_entry_test.grid(row=11, column=1, sticky="ew")
         file_entry_test.grid_remove()
-
+        # 
         label_choose = ttk.Label(
             frame,
             text="PayerID der Testperson eintragen"
         )
         label_choose.grid(row=12, column=1)
         label_choose.grid_remove()
-
-        button_testID = ttk.Button(
+        
+        # Speichern
+        button_accountid = ttk.Button(
             frame,
             text="Test ID speichern",
             bootstyle="secondary",
-            command=lambda: func.choose_testID(
+            command=lambda: func.Set_variable_option(
                 app_state.logger,
-                app_state.custom_TestID,
-                button_testID,
-                file_entry_test,
-                label_choose,
-                app_state.info_TESTcase
+                'Neue PayerID',
+                app_state.custom_accountid,
+                button_accountid,
+                app_state.info_accountid
             )
         )
-        button_testID.grid(row=11, column=2, padx=5)
-        button_testID.grid_remove()
 
-        checkbutton_test_id = ttk.Checkbutton(
-            frame,
-            text="TEST ID",
-            variable=app_state.test_entry,
-            bootstyle="primary-round-toggle",
-            command=lambda: func.Button_Aktivieren(
-                app_state.test_entry,
-                label_choose,
-                file_entry_test,
-                button_testID,
-                app_state.new_bestellid,
-                button_bestellID,
-                file_entry_bestellid,
-                label_choose_bestellid
-            )
-        )
-        checkbutton_test_id.grid(row=6, column=0, padx=5)
 
+        button_accountid.grid(row=11, column=2, padx=5)
+        button_accountid.grid_remove()
+        
         # ==================
         # Versand unterdrücken
         # ==================
@@ -268,50 +273,39 @@ def starte_GUI():
             offvalue="Nein",
             bootstyle="warning-round-toggle"
         )
-        checkbutton_versand.grid(row=7, column=0, padx=5)
+        checkbutton_versand.grid(row=5, column=0, padx=0, sticky="w")
 
-        # ==================
-        # Kündigungsgrund
-        # ==================
-        choose_kunGrund = tk.StringVar(master=root)
-
-        label_kuen = ttk.Label(
-            frame,
-            text="Kündigungsgrund eintragen (nur einen!)"
-        )
-        label_kuen.grid(row=6, column=1)
-
-        file_entry_kuen = ttk.Entry(
-            frame,
-            textvariable=choose_kunGrund,
-            width=50
-        )
-        file_entry_kuen.grid(row=7, column=1, sticky="ew")
-
-        file_button_kuen = ttk.Button(
-            frame,
-            text="Kündigungsgrund speichern",
-            bootstyle="secondary",
-            command=lambda: func.clear_kündigungsgrund(
-                choose_kunGrund,
-                app_state.logger
-            )
-        )
-        file_button_kuen.grid(row=7, column=2, padx=5)
-
-        auswahl_dropdown.trace_add(
-            "write",
-            lambda *_: func.update_state(
-                auswahl_dropdown,
-                file_entry_kuen,
-                file_button_kuen,
-                app_state.listbox_uebersicht
-            )
-        )
 
         # ==================
         # Neue Bestell-ID
         # ==================
+
+        #### Sichtbarkeit einstellen
+        checkbutton_neue_bestellid = ttk.Checkbutton(
+                    frame,
+                    text="Neue BestellID",
+                    variable=app_state.new_bestellid,
+                    bootstyle="primary-round-toggle",
+                    command=lambda: func.Button_Aktivieren({'var_name':'Neue BestellID',
+                                                            'var_check':app_state.new_bestellid,
+                                                            'lable':{'Name':label_choose_bestellid,'row':17,'column':1},
+                                                            'file_entry':{'Name':file_entry_bestellid,'row':18,'column':1},
+                                                            'button':{'Name':button_bestellID,'row':18,'column':2},
+                                                            'variable':app_state.custom_bestellID
+                                                            },app_state.logger)
+                                                            )
+        checkbutton_neue_bestellid.grid(row=6, column=0, padx=0, sticky="w")
+
+        #### Funktion bei Sichtbarkeit = Ja 
+        # Label
+        label_choose_bestellid = ttk.Label(
+                    frame,
+                    text="Neue BestellID eintragen"
+                )
+        label_choose_bestellid.grid(row=14, column=1)
+        label_choose_bestellid.grid_remove()
+
+        # Eingabefeld
         file_entry_bestellid = ttk.Entry(
             frame,
             textvariable=app_state.custom_bestellID,
@@ -319,47 +313,89 @@ def starte_GUI():
         )
         file_entry_bestellid.grid(row=15, column=1, sticky="ew")
         file_entry_bestellid.grid_remove()
-
-        label_choose_bestellid = ttk.Label(
-            frame,
-            text="Neue BestellID eintragen"
-        )
-        label_choose_bestellid.grid(row=14, column=1)
-        label_choose_bestellid.grid_remove()
-
+        
+        # Eingabe Speichern
         button_bestellID = ttk.Button(
             frame,
             text="BestellID Test speichern",
             bootstyle="secondary",
-            command=lambda: func.choose_BestellID(
+            command=lambda: func.Set_variable_option(
                 app_state.logger,
+                'Neue BestellID',
                 app_state.custom_bestellID,
                 button_bestellID,
-                file_entry_bestellid,
-                label_choose_bestellid,
                 app_state.info_bestellid
             )
         )
         button_bestellID.grid(row=15, column=2, padx=5)
         button_bestellID.grid_remove()
 
-        checkbutton_neue_bestellid = ttk.Checkbutton(
+        # ==================
+        # Kündigungsgrund
+        # ==================
+        #### Sichtbarkeit einstellen
+        checkbutton_kuendigungsgrund = ttk.Checkbutton(
+                            frame,
+                            text="Neuer Kündigungsgrund",
+                            variable=app_state.new_kündigungsgrund,
+                            bootstyle="primary-round-toggle",
+                            command=lambda: func.Button_Aktivieren({'var_name':'Neuer Kündigungsgrund',
+                                                                    'var_check':app_state.new_kündigungsgrund,
+                                                                    'lable':{'Name':label_kuen,'row':27,'column':1},
+                                                                    'file_entry':{'Name':file_entry_kuen,'row':28,'column':1},
+                                                                    'button':{'Name':file_button_kuen,'row':28,'column':2},
+                                                                    'variable':app_state.custom_kündigunsgrund
+                                                                    },app_state.logger)
+                                                            )
+        checkbutton_kuendigungsgrund.grid(row=7, column=0, padx=0, sticky="w")
+
+
+        #### Funktion bei Sichtbarkeit = Ja 
+        #choose_kunGrund = tk.StringVar(master=root)
+
+        # label
+        label_kuen = ttk.Label(
             frame,
-            text="Neue BestellID",
-            variable=app_state.new_bestellid,
-            bootstyle="primary-round-toggle",
-            command=lambda: func.Button_Aktivieren(
-                app_state.test_entry,
-                label_choose,
-                file_entry_test,
-                button_testID,
-                app_state.new_bestellid,
-                button_bestellID,
-                file_entry_bestellid,
-                label_choose_bestellid
+            text="Kündigungsgrund eintragen (nur einen!)"
+        )
+        label_kuen.grid(row=6, column=1)
+        label_kuen.grid_remove()
+
+        # Eingabefeld 
+        file_entry_kuen = ttk.Entry(
+            frame,
+            textvariable=app_state.custom_kündigunsgrund,
+            width=50
+        )
+        file_entry_kuen.grid(row=7, column=1, sticky="ew")
+        file_entry_kuen.grid_remove()
+
+        # Speichern
+        file_button_kuen = ttk.Button(
+            frame,
+            text="Kündigungsgrund speichern",
+            bootstyle="secondary",
+            command=lambda: func.Set_variable_option(
+                    app_state.logger,
+                    'Neuer Kündigungsgrund',
+                    app_state.custom_kündigunsgrund,
+                    file_button_kuen,
+                    app_state.info_kündigungsgrund
             )
         )
-        checkbutton_neue_bestellid.grid(row=8, column=0, padx=5)
+        file_button_kuen.grid(row=7, column=2, padx=5)
+        file_button_kuen.grid_remove()
+
+        # Auswahl der Kündigunsggründe nur bei Kündigungen!
+        auswahl_dropdown.trace_add(
+            "write",
+            lambda *_: func.update_state(
+                auswahl_dropdown,
+                file_entry_kuen,
+                file_button_kuen,
+                app_state.treeview_uebersicht
+            )
+        )
 
         # ==================
         # IDs speichern
@@ -371,21 +407,20 @@ def starte_GUI():
             command=lambda: (
                 func.Save_entry(
                     choose_id,
-                    app_state.listbox_uebersicht,
-                    app_state.info_TESTcase,
-                    app_state.custom_TestID,
+                    app_state.info_accountid,
+                    app_state.custom_accountid,
                     auswahl_dropdown,
                     app_state.shared_data,
-                    app_state.test_entry,
+                    app_state.new_accountid,
                     app_state.info_bestellid,
                     app_state.custom_bestellID,
                     app_state.Versand_entry,
                     app_state.logger,
-                    choose_kunGrund,
+                    app_state.custom_kündigunsgrund,
                     app_state.new_bestellid,
                     file_entry_test,
                     label_choose,
-                    button_testID,
+                    button_accountid,
                     file_entry_bestellid,
                     label_choose_bestellid,
                     button_bestellID
@@ -400,7 +435,7 @@ def starte_GUI():
             auswahl_dropdown,
             file_entry_kuen,
             file_button_kuen,
-            app_state.listbox_uebersicht
+            app_state.treeview_uebersicht
         )
 
         # ==================
@@ -413,7 +448,7 @@ def starte_GUI():
             bootstyle="secondary"
         )
         log_frame.grid(
-            row=17,
+            row=38,
             column=0,
             columnspan=6,
             padx=10,
@@ -477,38 +512,6 @@ def starte_GUI():
             )
         )
         start_button.grid(row=9, column=2, padx=5, pady=10)
-
-        ####################### Listbox
-        # ttkbootstrap hat keine native Listbox.
-        # Daher wird die Tkinter-Listbox weiterverwendet.
-        listbox_frame = ttk.Labelframe(
-            frame,
-            text="Gespeicherte Einträge",
-            padding=8,
-            bootstyle="primary"
-        )
-        listbox_frame.grid(
-            row=10,
-            column=0,
-            columnspan=6,
-            padx=10,
-            pady=10,
-            sticky="nsew"
-        )
-        
-        app_state.listbox_uebersicht = tk.Listbox(
-            listbox_frame,
-            width=85,
-            height=10,
-            activestyle="none",
-            relief="flat",
-            borderwidth=0
-        )
-        app_state.listbox_uebersicht.grid(
-            row=0,
-            column=0,
-            sticky="nsew"
-        )
 
         ####################### Treeview hinzufügen
         # Spalten definieren
