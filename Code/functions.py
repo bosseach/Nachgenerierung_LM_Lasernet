@@ -9,19 +9,6 @@ import requests
 from core_services.constants import RESTHOST_PROD,HEADERS_PROD
 from core_services.db import execute_sql_query
 
-
-'''# Globale variablen erstellen
-    test_entry = tk.IntVar(value=0)
-    new_bestellid=tk.IntVar(value=0)
-    custom_bestellID=tk.StringVar(value='')
-    info_bestellid=tk.IntVar(value=0)
-    info_TESTcase=tk.IntVar(value=0)
-    custom_TestID=tk.StringVar(value=5513755201)
-    Versand_entry = tk.StringVar(value='Nein')
-    listbox2=tk.Listbox(root)
-    shared_data = []
-'''
-
 # ======================================================================================
 # Aufträge erstellen
 # ======================================================================================
@@ -44,10 +31,6 @@ def Button_Aktivieren(dict,logger):
         dict['variable'].set('')
         logger.info(f'{dict['var_name']} ist zurückgesetzt')
 
-
-dic_option={}
-
-
 def Set_variable_option(
     logger,
     var_name,
@@ -59,70 +42,12 @@ def Set_variable_option(
     Abspeichern der Feldänderungen
     '''
     logger.info(f'{var_name} gewählt: {var_entry.get()}')
-    var_button['state'] = tk.NORMAL
-    var_info.set(1)
-
-def choose_accountid_alt(
-    logger,
-    custom_TestID,
-    button_testID,
-    file_entry_test,
-    lable_choose,
-    info_TESTcase
-):
-    logger.info(f'Custom TestID gewählt: {custom_TestID.get()}')
-    button_testID['state'] = tk.NORMAL
-    file_entry_test.grid(row=10, column=1)
-    lable_choose.grid(row=9, column=1)
-    info_TESTcase.set(1)
-
-    return info_TESTcase
-
-def choose_BestellID_alt(
-    logger,
-    custom_bestellID,
-    button_bestellID,
-    file_entry_bestellid,
-    lable_choose_bestellid,
-    info_bestellid
-):
-    logger.info(f'Custom BestellID gewählt: {custom_bestellID.get()}')
-    button_bestellID['state'] = tk.NORMAL
-    #file_entry_bestellid.grid(row=15, column=1)
-    #lable_choose_bestellid.grid(row=14, column=1)
-    #info_bestellid.set(1)
-
-    return info_bestellid
-
-def choose_Kündigungsgrund_alt(
-    logger,
-    custom_bestellID,
-    button_bestellID,
-    file_entry_bestellid,
-    lable_choose_bestellid,
-    info_bestellid
-):
-    logger.info(f'Custom BestellID gewählt: {custom_bestellID.get()}')
-    button_bestellID['state'] = tk.NORMAL
-    file_entry_bestellid.grid(row=15, column=1)
-    lable_choose_bestellid.grid(row=14, column=1)
-    info_bestellid.set(1)
-
-    return info_bestellid
-
-def clear_kündigungsgrund_alt(
-    choose_kunGrund,
-    logger
-):
-    #list_bestell2 = choose_kunGrund.get().split(',')
-    #list_bestell2 = choose_kunGrund.get()
-    #for item in list_bestell2:
-    #    listbox_uebersicht.insert(tk.END, item)
-
-    logger.info(f'Kündigungsgrund gespeichert:{choose_kunGrund.get()}')
-    #logger.info(f'listbox:{list(listbox_uebersicht.get(0, tk.END))}')
-    #logger.info('Kündigungsgrund ist gespeichert')
-    #choose_kunGrund.set('')
+    # Zurücksetzen der Variable außer bei Versand unterdrücken
+    if var_name not in ['Versand unterdrücken', 'API Call']:
+        var_button['state'] = tk.NORMAL
+        var_info.set(1)
+    else:
+        pass
 
 def Save_entry(
     # Bestellungen/Logger
@@ -130,6 +55,7 @@ def Save_entry(
     auswahl_dropdown,
     shared_data,
     logger,
+    API_call,
     # Felderänderungen
     info_payerid,
     custom_payerid,
@@ -138,16 +64,22 @@ def Save_entry(
     info_kündigungsgrund,
     custom_kündigunsgrund,
     Versand_entry,
-    # Zurücksetzen der GUI
-    file_entry_test,
-    lable_choose,
-    button_testID,
+    #### Zurücksetzen der GUI
+    # Payerid
+    new_payerid,
+    file_entry_payerid,
+    label_choose_payerid,
+    button_payerid,
+    # Bestellid
+    new_bestellid,
     file_entry_bestellid,
-    lable_choose_bestellid,
+    label_choose_bestellid,
     button_bestellID,
+    # Kündigunsgrund
+    new_kündigungsgrund,
     file_entry_kuen,
-    file_button_kuen,
-    label_kuen
+    label_choose_kuen,
+    button_kuen
 ):
     '''
     Funktion ermöglicht das Abspeichern der eingetragenen Subscriptions inkl. der ausgewählten Änderungen
@@ -157,112 +89,30 @@ def Save_entry(
     #### Feldänderungen 
     # Kündigungen
     if info_kündigungsgrund.get()==1:
-        new_kündigungsgrund = custom_kündigunsgrund.get()
+        new_kündigungsgrund_entry = custom_kündigunsgrund.get()
     else:
-        new_kündigungsgrund=''
+        new_kündigungsgrund_entry='Nein'
     # Neue PayerID
     if info_payerid.get() == 1:
         new_payer_id = custom_payerid.get()
     else:
-        new_payer_id = ''
+        new_payer_id = 'Nein'
     # neue Bestellid
     if info_bestellid.get()==1:
-        new_bestellid=custom_bestellID.get()
-
-    # Neue Eintragungen
-    new_entry = {
-        'Typ': auswahl_dropdown.get(),
-        'Nr': len(shared_data) + 1,
-        'list_subscriptions': list_subscriptions,
-        'test_entry': 'asd',
-        'info_TESTcase': 'asd',
-        'Change_accountID': new_payer_id,
-        'info_bestellid': 'asd',
-        'custom_bestellID': new_bestellid,
-        'Versand_unterdrücken': Versand_entry.get(),
-        'Kuendigungsgrund': new_kündigungsgrund
-    }
-    shared_data.append(new_entry)
-
-    # Logger
-    logger.info(f'############# BestellIDs: {shared_data} hinzugefügt #############')
-    logger.info('BestellIDs sind gespeichert')
-
-    # Bereinigen der Variablen
-    subscriptionid.set('')
-    info_payerid.set(0)
-    custom_payerid.set(5513755201)
-    info_bestellid.set(0)
-    custom_bestellID.set('')
-    custom_kündigunsgrund.set('')
-    Versand_entry.set('')
-
-    # Verdecken der Felder
-    file_entry_test.grid_remove()
-    lable_choose.grid_remove()
-    button_testID.grid_remove()
-    file_entry_bestellid.grid_remove()
-    lable_choose_bestellid.grid_remove()
-    button_bestellID.grid_remove()
-    file_entry_kuen.grid_remove()
-    file_button_kuen.grid_remove()
-    label_kuen.grid_remove()
-
-    try:
-        pass
-    except NameError:
-        pass
-
-def Save_entry_old(
-    choose_id,
-    info_payerid,
-    custom_payerid,
-    auswahl_dropdown,
-    shared_data,
-    test_entry,
-    info_bestellid,
-    custom_bestellID,
-    Versand_entry,
-    logger,
-    choose_kunGrund,
-    new_bestellid,
-    file_entry_test,
-    lable_choose,
-    button_testID,
-    file_entry_bestellid,
-    lable_choose_bestellid,
-    button_bestellID
-):
-    '''
-    Funktion ermöglicht das Abspeichern der eingetragenen Subscriptions inkl. der ausgewählten Änderungen
-    '''
-    list_subscriptions = choose_id.get().split(',')
-    
-    #### Feldänderungen 
-    # Kündigungen
-    try:
-        kuen_var = choose_kunGrund.get()
-    except:
-        kuen_var = ''
-    # Neue PayerID
-    if info_payerid.get() == 1:
-        new_payer_id = custom_payerid.get()
+        new_bestellid_entry=custom_bestellID.get()
     else:
-        new_payer_id = ''
-    # neue Bestellid
+        new_bestellid_entry='Nein'
 
     # Neue Eintragungen
     new_entry = {
         'Typ': auswahl_dropdown.get(),
         'Nr': len(shared_data) + 1,
         'list_subscriptions': list_subscriptions,
-        'test_entry': test_entry.get(),
-        'info_TESTcase': info_payerid.get(),
-        'Change_accountID': new_payer_id,
-        'info_bestellid': info_bestellid.get(),
-        'custom_bestellID': custom_bestellID.get(),
+        'custom_payerid': new_payer_id,
+        'custom_bestellID': new_bestellid_entry,
         'Versand_unterdrücken': Versand_entry.get(),
-        'Kuendigungsgrund': kuen_var
+        'Kuendigungsgrund': new_kündigungsgrund_entry,
+        'API_call':API_call.get()
     }
     shared_data.append(new_entry)
 
@@ -270,24 +120,36 @@ def Save_entry_old(
     logger.info(f'############# BestellIDs: {shared_data} hinzugefügt #############')
     logger.info('BestellIDs sind gespeichert')
 
-    # Bereinigen der Variablen
-    choose_id.set('')
-    test_entry.set(0)
-    info_bestellid.set(0)
+    #### Bereinigen der Variablen
+    subscriptionid.set('')
+    Versand_entry.set('Nein')
+    API_call.set('Nein')
+    # Payerid
+    new_payerid.set(0)
     info_payerid.set(0)
     custom_payerid.set(5513755201)
-    custom_bestellID.set('')
-    Versand_entry.set('')
-    choose_kunGrund.set('')
+    # Bestellid
     new_bestellid.set(0)
+    info_bestellid.set(0)
+    custom_bestellID.set('')
+    # Kündigungsgrund
+    info_kündigungsgrund.set(0)
+    new_kündigungsgrund.set(0)
+    custom_kündigunsgrund.set('')
 
-    # Verdecken der Felder
-    file_entry_test.grid_remove()
-    lable_choose.grid_remove()
-    button_testID.grid_remove()
+    #### Verdecken der Felder
+    # Payerid
+    file_entry_payerid.grid_remove()
+    label_choose_payerid.grid_remove()
+    button_payerid.grid_remove()
+    # Bestellid
     file_entry_bestellid.grid_remove()
-    lable_choose_bestellid.grid_remove()
+    label_choose_bestellid.grid_remove()
     button_bestellID.grid_remove()
+    # Kündigungsgrund
+    file_entry_kuen.grid_remove()
+    label_choose_kuen.grid_remove()
+    button_kuen.grid_remove()
 
     try:
         pass
@@ -310,6 +172,11 @@ def update_state(
     if listbox2 is not None:
         listbox2.config(state=state)
 
+
+# ======================================================================================
+# Sonstige
+# ======================================================================================
+
 def open_dokumentation():
     text_var = ('''Das Tool generiert einen Subscriptions- und einen Accountreport für \ndie Erstellung der Auftragsbestätigungen via Lasernet. 
             \n- Als Input dienen BestellIds für die zu erstellenden Aufträge, \nMehrere IDs sind durch Komma zu trennen. 
@@ -329,14 +196,6 @@ def open_dokumentation():
     doku_tk.config(state='disable')
 
     root_doku.mainloop()
-
-
-# ======================================================================================
-# Daten erstellen
-# ======================================================================================
-
-def data_folder(folder_data, filedialog):
-    folder_data.set(filedialog.askdirectory())
 
 def showdata_treeview(treeview_data, shared_data):
     """
@@ -360,100 +219,25 @@ def showdata_treeview(treeview_data, shared_data):
                 item.get("Nr", ""),
                 item.get("Typ", ""),
                 len(item.get("list_subscriptions", [])),
-                item.get("Change_accountID", ""),
+                item.get("custom_payerid", ""),
                 item.get("Versand_unterdrücken", ""),
-                item.get("Kuendigungsgrund", "")
+                item.get("Kuendigungsgrund", ""),
+                item.get("custom_bestellID", ""),
+                item.get("API_call", "")
             )
         )
-        
-def showdata(listbox_data, shared_data):
-    listbox_data.delete(0, tk.END)
 
-    if not shared_data:
-        #listbox_data.insert(tk.END,shared_data)
-        listbox_data.insert(tk.END, "Keine Einträge vorhanden")
-        return
+# ======================================================================================
+# Daten erstellen
+# ======================================================================================
 
-    for item in shared_data:
-        display_text = (
-            f"Typ: {item['Typ']}, "
-            f"Anzahl: {len(item['list_subscriptions'])}, "
-            f"Testkunde: {item['Change_accountID']}, "
-            f"Versand unterdrückt: {item['Versand_unterdrücken']}, "
-            f"Kündigungsgrund: {item['Kuendigungsgrund']}"
-        )
-        listbox_data.insert(tk.END, display_text)
-
-def Generiere_Reports(
-    folder_data,
-    shared_data,
-    logger
-):
-    start_time = datetime.now()
-
-    if len(folder_data.get()) == 0:
-        logger.info('Kein Verzeichnis ausgewählt')
-
-    elif len(shared_data) == 0:
-        logger.info('Keine BestellIDs ausgewählt')
-
-    else:
-        check_df = 0
-
-        for item in shared_data:
-            df_sub, dict_email = Allg_Verarbeitung(item,
-                                                   logger,
-                                                   item['custom_bestellID']
-                                                    )
-
-            if item['info_bestellid'] != 0:
-                df_sub = Umwandeln_BestellID(df_sub, item['custom_bestellID'])
-
-            if item['Typ'] == 'Auftragsbestätigungen':
-                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'AB')
-            elif item['Typ'] == 'Kündigungsbestätigungen':
-                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'KB')
-            elif item['Typ'] == 'Beides':
-                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'beides')
-            elif item['Typ'] == 'Keine Bearbeitung':
-                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'raw')
-
-            if check_df == 0:
-                df_sub_full = df_sub
-                df_acc_full = df_acc
-                check_df = 1
-            else:
-                df_sub_full = pd.concat([df_sub_full, df_sub], ignore_index=True)
-                df_acc_full = pd.concat([df_acc_full, df_acc], ignore_index=True)
-
-    EXP_Datum = datetime.now().strftime("%d.%m.%Y")
-
-    imp = folder_data.get()
-    imp_acc = imp + r'/Accountreport_Nachlieferung'
-    imp_sub = imp + r'/Subscriptionsreport_Nachlieferung'
-    EXP_acc = imp_acc + r'_{}.csv'.format(EXP_Datum)
-    EXP_sub = imp_sub + r'_{}.csv'.format(EXP_Datum)
-
-    df_sub_full.to_csv(EXP_sub, index=False, sep=',')
-    df_acc_full.to_csv(EXP_acc, index=False, sep=',')
-
-    endtime = datetime.now()
-
-    root2 = tk.Tk()
-    root2.wm_title('Result')
-    root2.geometry("200x100")
-
-    result_text = tk.Label(
-        root2,
-        text=f'Die Testdaten sind erstellt worden \n Laufzeit: {(endtime-start_time).seconds} Sekunden'
-    )
-    result_text.grid(row=1, column=1)
-
-    root2.mainloop()
+# Hilfsfunktionen
+def data_folder(folder_data, filedialog):
+    folder_data.set(filedialog.askdirectory())
 
 def Umwandeln_BestellID(df_sub, new_id):
     '''
-    Ändern der BestellIDs auf eine generische neue ID
+    Ändern der BestellIDs auf eine neue ID
     '''
     nr_id = 0
     dict_map_ID = []
@@ -502,11 +286,81 @@ def get_api_call(url, HEADERS_PROD, logging, choose_header=None):
     except requests.exceptions.RequestException as e:
         logging.error(f"API-Aufruf fehlgeschlagen: {e}")
 
+# Zentrale Funktionen
+
+def Generiere_Reports(
+    folder_data,
+    shared_data,
+    logger
+):
+    start_time = datetime.now()
+
+    if len(folder_data.get()) == 0:
+        logger.info('Kein Verzeichnis ausgewählt')
+
+    elif len(shared_data) == 0:
+        logger.info('Keine BestellIDs ausgewählt')
+
+    else:
+        check_df = 0
+
+        for item in shared_data:
+            df_sub, dict_email = Allg_Verarbeitung(item,
+                                                   logger
+                                                    )
+
+            if item['custom_bestellID'] != 'Nein':
+                df_sub = Umwandeln_BestellID(df_sub, item['custom_bestellID'])
+
+            if item['Typ'] == 'Auftragsbestätigungen':
+                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'AB')
+            elif item['Typ'] == 'Kündigungsbestätigungen':
+                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'KB')
+            elif item['Typ'] == 'Beides':
+                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'beides')
+            elif item['Typ'] == 'Keine Bearbeitung':
+                df_acc, df_sub = AB_KB_Verarbeitung(df_sub, dict_email, item, 'raw')
+
+            if check_df == 0:
+                df_sub_full = df_sub
+                df_acc_full = df_acc
+                check_df = 1
+            else:
+                df_sub_full = pd.concat([df_sub_full, df_sub], ignore_index=True)
+                df_acc_full = pd.concat([df_acc_full, df_acc], ignore_index=True)
+
+    EXP_Datum = datetime.now().strftime("%d.%m.%Y")
+
+    imp = folder_data.get()
+    imp_acc = imp + r'/Accountreport_Nachlieferung'
+    imp_sub = imp + r'/Subscriptionsreport_Nachlieferung'
+    EXP_acc = imp_acc + r'_{}.csv'.format(EXP_Datum)
+    EXP_sub = imp_sub + r'_{}.csv'.format(EXP_Datum)
+
+    df_sub_full.to_csv(EXP_sub, index=False, sep=',')
+    df_acc_full.to_csv(EXP_acc, index=False, sep=',')
+
+    endtime = datetime.now()
+
+    root2 = tk.Tk()
+    root2.wm_title('Result')
+    root2.geometry("200x100")
+
+    result_text = tk.Label(
+        root2,
+        text=f'Die Testdaten sind erstellt worden \n Laufzeit: {(endtime-start_time).seconds} Sekunden'
+    )
+    result_text.grid(row=1, column=1)
+
+    root2.mainloop()
+
 def Allg_Verarbeitung(
     item,
-    logger,
-    custom_bestellID
-):
+    logger
+    ):
+    # ==================
+    # Bestellungen bilden
+    # ==================
     list_subscriptions = item['list_subscriptions']
     sql_subs = str(list_subscriptions).replace('[', '(')
     sql_subs = sql_subs.replace(']', ')')
@@ -535,53 +389,61 @@ def Allg_Verarbeitung(
 
     dict_email = {}
 
-    for item_acc in list(df_sub['AccountId'].unique()):
-        url_acc = f"{RESTHOST_PROD}accounts/{item_acc}"
-        response_acc = get_api_call(url_acc,HEADERS_PROD,logger)
-        dict_email[item_acc] = response_acc['email']
+    # API Calls
+    # Bearbeiter verändern das Startdatum eines Bestellung, diese ist nicht live in der DB, daher Updateoption durch API Call
+    if item['API_call']=='Ja':
+        for item_acc in list(df_sub['AccountId'].unique()):
+            url_acc = f"{RESTHOST_PROD}accounts/{item_acc}"
+            response_acc = get_api_call(url_acc,HEADERS_PROD,logger)
+            dict_email[item_acc] = response_acc['email']
 
-        url_sub = f"{RESTHOST_PROD}accounts/{item_acc}/subscriptions"
-        response_sub = get_api_call(url_sub,HEADERS_PROD,logger)
+            url_sub = f"{RESTHOST_PROD}accounts/{item_acc}/subscriptions"
+            response_sub = get_api_call(url_sub,HEADERS_PROD,logger)
 
-        for sub in response_sub:
-            df_sub.loc[
-                df_sub['SubscriptionReference'] ==
-                sub['recurringPaymentInfo']['subscriptionReference'],
-                'EmailAddress'
-            ] = response_acc['email']
+            for sub in response_sub:
+                df_sub.loc[
+                    df_sub['SubscriptionReference'] ==
+                    sub['recurringPaymentInfo']['subscriptionReference'],
+                    'EmailAddress'
+                ] = response_acc['email']
 
-            df_sub.loc[
-                df_sub['SubscriptionReference'] ==
-                sub['recurringPaymentInfo']['subscriptionReference'],
-                'StartDate'
-            ] = sub['startDate']
+                df_sub.loc[
+                    df_sub['SubscriptionReference'] ==
+                    sub['recurringPaymentInfo']['subscriptionReference'],
+                    'StartDate'
+                ] = sub['startDate']
 
+    # Anpassungen Formate
     df_sub['StartDate'] = pd.to_datetime(df_sub['StartDate'], errors='coerce')
     mask = df_sub['StartDate'].dt.time == pd.to_datetime('00:00:00').time()
     df_sub.loc[mask, 'StartDate'] = df_sub.loc[mask, 'StartDate'] + pd.Timedelta(hours=1)
-
     df_sub['SubscriptionId'] = df_sub['SubscriptionId'].astype(int)
 
-    if item['info_TESTcase'] == 1:
-        if len(item['Change_accountID']) == 10:
-            df_sub['Payer'] = item['Change_accountID']
-            logging.info('Testanpassung erfolgt')
+    # ==================
+    # Änderungen durchführen
+    # ==================
+
+    # Payer ID hinzufügen
+    if item['custom_payerid'] != 'Nein':
+        if len(item['custom_payerid']) == 10:
+            df_sub['Payer'] = item['custom_payerid']
+            logging.info('Custom PayerID hinzugefügt')
         else:
-            logger.error('Keine gültige PayerID!')
+            pass
 
     # Custom Bestellid hinzufügen
-    if item['info_bestellid'] == 1:
-        if len(custom_bestellID) != 0:
-            df_sub['BestellId'] = custom_bestellID
-            logger.info('Custom BestellID ist eingebaut')
-        else:
-            logger.error('Keine gültige BestellID eingegeben')
+    if item['custom_bestellID'] != 'Nein':
+        df_sub['BestellId'] = item['custom_bestellID']
+        logger.info('Custom BestellID ist eingebaut')
+    else:
+        pass
 
+    # Versand Unterdrücken
     if item['Versand_unterdrücken'] == 'Ja':
         df_sub['ZZBestaetigung'] = 'Nein'
         logger.info('Versand unterdrückt')
     else:
-        logger.info('Versand aktiv')
+        pass
 
     return df_sub, dict_email
 
@@ -590,9 +452,12 @@ def AB_KB_Verarbeitung(
     dict_email,
     item,
     typ
-):
+    ):
+    # ==================
+    # Accountreport bilden
+    # ==================
     list_payer = []
-
+    # Accountreport bilden
     for item_payer in df_sub['Payer'].unique():
         list_payer.append(item_payer[1:])
 
@@ -614,7 +479,8 @@ def AB_KB_Verarbeitung(
     Datum = datetime.now() - timedelta(days=1)
     Datum = Datum.strftime("%Y-%m-%d %H:%M:%S")
 
-    if item['test_entry'] != 0:
+    # Ändern der Mailaddressen im SubRep bei geänderter PayerID 
+    if item['custom_payerid'] != 'Nein':
         df_sub['EmailAddress'] = df_sub['EmailAddress'].apply(
             lambda x: df_acc['EmailAddress'][0]
         )
@@ -622,6 +488,11 @@ def AB_KB_Verarbeitung(
             lambda x: 'WN' if x == 'SLV' else x
         )
 
+    # ==================
+    # Dokumentenspezifische Verarbeitung
+    # ==================
+
+    #### Verarbeitung AB
     if typ == 'AB':
         df_sub['Kuendigungseingangsdatum'] = 'leer'
         df_sub['KuendigungsgrundName'] = 'leer'
@@ -633,16 +504,24 @@ def AB_KB_Verarbeitung(
         df_sub['SubscriptionStatus'] = 'Subscription pending Start Date'
         df_acc['AccountId'] = df_acc['AccountId'].astype(int)
 
-    elif typ == 'KB':
-        if len(item['Kuendigungsgrund']) != 0:
-            df_sub['Kuendigungsgrund'] = item['Kuendigungsgrund']
+    # Versand Unterdrücken
+    if item['Versand_unterdrücken'] == 'Ja':
+            df_sub['ZZBestaetigung'] = 'Nein'
 
+
+    #### Verarbeitung KB
+    elif typ == 'KB':
+        # Änderung Kündigungsgrund
+        if item['Kuendigungsgrund'] != 'Nein':
+            df_sub['Kuendigungsgrund'] = item['Kuendigungsgrund']
+        
+        # Anpassen des Kündigunseingangsdatums auf das aktuelle Datum  
         df_sub['Kuendigungseingangsdatum'] = df_sub.apply(
             lambda x: Datum if x['Kuendigungseingangsdatum'] != 'leer'
             else x['Kuendigungseingangsdatum'],
             axis=1
         )
-
+        # Anpassen des Subscriptionstatus für Lasernet
         df_sub['SubscriptionStatus'] = df_sub.apply(
             lambda x: 'Active Subscription'
             if x['Kuendigungsgrund'] != '95'
@@ -651,10 +530,11 @@ def AB_KB_Verarbeitung(
         )
 
         df_acc['AccountId'] = df_acc['AccountId'].astype(int)
-
+        # Hinzufügen der indirekten Unterdrückung
         if item['Versand_unterdrücken'] == 'Ja':
             df_acc['EmailAddress'] = 'Hendrik.Bosse@aschendorff.de'
 
+    #### Verarbeitung beides
     elif typ == 'beides':
         if len(item['Kuendigungsgrund']) != 0:
             df_sub['Kuendigungsgrund'] = item['Kuendigungsgrund']
@@ -680,9 +560,13 @@ def AB_KB_Verarbeitung(
         ).strftime("%Y-%m-%dT%H:%M:%S")
         df_sub['SubscriptionStatus'] = 'Active Subscription'
 
+    #### Keine Verarbeitung
     elif typ == 'raw':
         pass
 
+    # ==================
+    # Endanpassungen
+    # ==================
     reverse_mapping = {
         "CreatedDate": "Created Date",
         "LastUpdated": "Last Updated",

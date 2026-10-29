@@ -18,9 +18,9 @@ class AppState:
 
     def __init__(self, root):
         # Feldänderungen 
-        self.new_accountid = tk.IntVar(master=root, value=0)                    # variable für Checkbutton
-        self.info_accountid = tk.IntVar(master=root, value=0)                   # variable fürs Abspeichern
-        self.custom_accountid = tk.StringVar(master=root, value="5513755201")   # Input 
+        self.new_payerid = tk.IntVar(master=root, value=0)                    # variable für Checkbutton
+        self.info_payerid = tk.IntVar(master=root, value=0)                   # variable fürs Abspeichern
+        self.custom_payerid = tk.StringVar(master=root, value="5513755201")   # Input 
 
         self.new_kündigungsgrund = tk.IntVar(master=root, value=0)
         self.info_kündigungsgrund = tk.IntVar(master=root, value=0)
@@ -30,7 +30,8 @@ class AppState:
         self.info_bestellid = tk.IntVar(master=root, value=0)
         self.custom_bestellID = tk.StringVar(master=root, value="")
         
-        self.Versand_entry = tk.StringVar(master=root, value="")
+        self.Versand_entry = tk.StringVar(master=root, value="Nein")
+        self.API_call = tk.StringVar(master=root, value="Nein")
 
         # Gemeinsame Daten zwischen Seite 1 und Seite 2
         self.shared_data = []
@@ -75,7 +76,7 @@ def starte_GUI():
     root = ttk.Window(
         title="Lasernet Bestätigungen Auftrag/Kündigung",
         themename="darkly",  # Alternativen: darkly, superhero, minty, cosmo, litera ...
-        size=(700, 600),
+        size=(800, 600),
         resizable=(True, True)
     )
 
@@ -163,7 +164,7 @@ def starte_GUI():
         # ==================
         # SubscriptionIDs
         # ==================
-        choose_id = tk.StringVar(master=root)
+        subscriptionid = tk.StringVar(master=root)
 
         # Label
         label_bestellid = ttk.Label(
@@ -178,7 +179,7 @@ def starte_GUI():
         # Eingabe
         file_entry = ttk.Entry(
             frame,
-            textvariable=choose_id,
+            textvariable=subscriptionid,
             width=50
         )
         file_entry.grid(row=5, column=1, sticky="ew")
@@ -207,60 +208,78 @@ def starte_GUI():
             bootstyle="primary"
         )
         dropdown.grid(row=6, column=2, padx=5, sticky="ew")
-
         # ==================
-        # Neue Accountid
+        # Versand unterdrücken
+        # ==================
+        checkbutton_api_call = ttk.Checkbutton(
+            frame,
+            text="API Call",
+            variable=app_state.API_call,
+            onvalue="Ja",
+            offvalue="Nein",
+            bootstyle="warning-round-toggle",
+            command=lambda: func.Set_variable_option(
+                            app_state.logger,
+                            'API Call',
+                            app_state.API_call,
+                            'dummy',
+                            'dummy'
+                        )
+                                                    )
+        checkbutton_api_call.grid(row=3, column=0, padx=0, sticky="w")
+        # ==================
+        # Neue payerid
         # ==================
         #### Checkbutton Sichtbarkeit der Funktion einstellen ####
-        checkbutton_accountid = ttk.Checkbutton(
+        checkbutton_payerid = ttk.Checkbutton(
                                     frame,
                                     text="Neue PayerID",
-                                    variable=app_state.new_accountid,
+                                    variable=app_state.new_payerid,
                                     bootstyle="primary-round-toggle",
                                     command=lambda: func.Button_Aktivieren({'var_name':'Neue PayerID',
-                                                                            'var_check':app_state.new_accountid,
-                                                                            'lable':{'Name':label_choose,'row':7,'column':1},
-                                                                            'file_entry':{'Name':file_entry_test,'row':8,'column':1},
-                                                                            'button':{'Name':button_accountid,'row':8,'column':2},
-                                                                            'variable':app_state.custom_accountid
+                                                                            'var_check':app_state.new_payerid,
+                                                                            'lable':{'Name':label_choose_payerid,'row':7,'column':1},
+                                                                            'file_entry':{'Name':file_entry_payerid,'row':8,'column':1},
+                                                                            'button':{'Name':button_payerid,'row':8,'column':2},
+                                                                            'variable':app_state.custom_payerid
                                                                             },app_state.logger)
                                 )
-        checkbutton_accountid.grid(row=4, column=0, padx=0, sticky="w")
+        checkbutton_payerid.grid(row=4, column=0, padx=0, sticky="w")
 
         #### Funktion bei Sichtbarkeit = Ja ####
         # Eingabefeld
-        file_entry_test = ttk.Entry(
+        file_entry_payerid = ttk.Entry(
             frame,
-            textvariable=app_state.custom_accountid,
+            textvariable=app_state.custom_payerid,
             width=50
         )
-        file_entry_test.grid(row=11, column=1, sticky="ew")
-        file_entry_test.grid_remove()
+        file_entry_payerid.grid(row=11, column=1, sticky="ew")
+        file_entry_payerid.grid_remove()
         # 
-        label_choose = ttk.Label(
+        label_choose_payerid = ttk.Label(
             frame,
             text="PayerID der Testperson eintragen"
         )
-        label_choose.grid(row=12, column=1)
-        label_choose.grid_remove()
+        label_choose_payerid.grid(row=12, column=1)
+        label_choose_payerid.grid_remove()
         
         # Speichern
-        button_accountid = ttk.Button(
+        button_payerid = ttk.Button(
             frame,
             text="Test ID speichern",
             bootstyle="secondary",
             command=lambda: func.Set_variable_option(
                 app_state.logger,
                 'Neue PayerID',
-                app_state.custom_accountid,
-                button_accountid,
-                app_state.info_accountid
+                app_state.custom_payerid,
+                button_payerid,
+                app_state.info_payerid
             )
         )
 
 
-        button_accountid.grid(row=11, column=2, padx=5)
-        button_accountid.grid_remove()
+        button_payerid.grid(row=11, column=2, padx=5)
+        button_payerid.grid_remove()
         
         # ==================
         # Versand unterdrücken
@@ -271,8 +290,15 @@ def starte_GUI():
             variable=app_state.Versand_entry,
             onvalue="Ja",
             offvalue="Nein",
-            bootstyle="warning-round-toggle"
-        )
+            bootstyle="warning-round-toggle",
+            command=lambda: func.Set_variable_option(
+                            app_state.logger,
+                            'Versand unterdrücken',
+                            app_state.Versand_entry,
+                            'dummy',
+                            'dummy'
+                        )
+                                                    )
         checkbutton_versand.grid(row=5, column=0, padx=0, sticky="w")
 
 
@@ -341,9 +367,9 @@ def starte_GUI():
                             bootstyle="primary-round-toggle",
                             command=lambda: func.Button_Aktivieren({'var_name':'Neuer Kündigungsgrund',
                                                                     'var_check':app_state.new_kündigungsgrund,
-                                                                    'lable':{'Name':label_kuen,'row':27,'column':1},
+                                                                    'lable':{'Name':label_choose_kuen,'row':27,'column':1},
                                                                     'file_entry':{'Name':file_entry_kuen,'row':28,'column':1},
-                                                                    'button':{'Name':file_button_kuen,'row':28,'column':2},
+                                                                    'button':{'Name':button_kuen,'row':28,'column':2},
                                                                     'variable':app_state.custom_kündigunsgrund
                                                                     },app_state.logger)
                                                             )
@@ -354,12 +380,12 @@ def starte_GUI():
         #choose_kunGrund = tk.StringVar(master=root)
 
         # label
-        label_kuen = ttk.Label(
+        label_choose_kuen = ttk.Label(
             frame,
             text="Kündigungsgrund eintragen (nur einen!)"
         )
-        label_kuen.grid(row=6, column=1)
-        label_kuen.grid_remove()
+        label_choose_kuen.grid(row=6, column=1)
+        label_choose_kuen.grid_remove()
 
         # Eingabefeld 
         file_entry_kuen = ttk.Entry(
@@ -371,7 +397,7 @@ def starte_GUI():
         file_entry_kuen.grid_remove()
 
         # Speichern
-        file_button_kuen = ttk.Button(
+        button_kuen = ttk.Button(
             frame,
             text="Kündigungsgrund speichern",
             bootstyle="secondary",
@@ -379,12 +405,12 @@ def starte_GUI():
                     app_state.logger,
                     'Neuer Kündigungsgrund',
                     app_state.custom_kündigunsgrund,
-                    file_button_kuen,
+                    button_kuen,
                     app_state.info_kündigungsgrund
             )
         )
-        file_button_kuen.grid(row=7, column=2, padx=5)
-        file_button_kuen.grid_remove()
+        button_kuen.grid(row=7, column=2, padx=5)
+        button_kuen.grid_remove()
 
         # Auswahl der Kündigunsggründe nur bei Kündigungen!
         auswahl_dropdown.trace_add(
@@ -392,7 +418,7 @@ def starte_GUI():
             lambda *_: func.update_state(
                 auswahl_dropdown,
                 file_entry_kuen,
-                file_button_kuen,
+                button_kuen,
                 app_state.treeview_uebersicht
             )
         )
@@ -406,35 +432,46 @@ def starte_GUI():
             bootstyle="success",
             command=lambda: (
                 func.Save_entry(
-                    choose_id,
-                    app_state.info_accountid,
-                    app_state.custom_accountid,
+                    # Bestellungen/Logger
+                    subscriptionid,
                     auswahl_dropdown,
                     app_state.shared_data,
-                    app_state.new_accountid,
+                    app_state.logger,
+                    app_state.API_call,
+                    # Feldänderungen
+                    app_state.info_payerid,
+                    app_state.custom_payerid,
                     app_state.info_bestellid,
                     app_state.custom_bestellID,
-                    app_state.Versand_entry,
-                    app_state.logger,
+                    app_state.info_kündigungsgrund,
                     app_state.custom_kündigunsgrund,
+                    app_state.Versand_entry,
+                    #### Zurücksetzen der GUI
+                    # Payerid
+                    app_state.new_payerid,
+                    file_entry_payerid,
+                    label_choose_payerid,
+                    button_payerid,
+                    # Bestellid
                     app_state.new_bestellid,
-                    file_entry_test,
-                    label_choose,
-                    button_accountid,
                     file_entry_bestellid,
                     label_choose_bestellid,
-                    button_bestellID
+                    button_bestellID,
+                    # Kündigunsgrund
+                    app_state.new_kündigungsgrund,
+                    file_entry_kuen,
+                    label_choose_kuen,
+                    button_kuen
                 ),
                 aktualisiere_uebersicht()
             )
         )
         file_button_ids.grid(row=5, column=2, padx=5)
-
         # Initialen Sichtbarkeitsstatus setzen
         func.update_state(
             auswahl_dropdown,
             file_entry_kuen,
-            file_button_kuen,
+            button_kuen,
             app_state.treeview_uebersicht
         )
 
@@ -458,7 +495,7 @@ def starte_GUI():
 
         log_text = scrolledtext.ScrolledText(
             log_frame,
-            width=85,
+            width=118,
             height=20,
             wrap=WORD
         )
@@ -516,7 +553,7 @@ def starte_GUI():
         ####################### Treeview hinzufügen
         # Spalten definieren
         # columns = ("name", "alter", "stadt")
-        columns=("Nr","Typ","Anzahl","Testkunde","Versand unterdrückt","Kündigungsgrund")
+        columns=("Nr","Typ","Anzahl","Testkunde","Versand unterdrückt","Kündigungsgrund","custom_bestellID","API_call")
 
         # Tabelle erstellen
         app_state.treeview_uebersicht = ttk.Treeview(
@@ -529,17 +566,21 @@ def starte_GUI():
         app_state.treeview_uebersicht.heading("Nr", text="Nr")
         app_state.treeview_uebersicht.heading("Typ", text="Typ")
         app_state.treeview_uebersicht.heading("Anzahl", text="Anzahl")
-        app_state.treeview_uebersicht.heading("Testkunde", text="Testkunde")
+        app_state.treeview_uebersicht.heading("Testkunde", text="Neue Payerid")
         app_state.treeview_uebersicht.heading("Versand unterdrückt", text="Versand unterdrückt")
-        app_state.treeview_uebersicht.heading("Kündigungsgrund", text="Kündigungsgrund")
+        app_state.treeview_uebersicht.heading("Kündigungsgrund", text="Neuer Kündigungsgrund")
+        app_state.treeview_uebersicht.heading("custom_bestellID", text="Neue Bestellid")
+        app_state.treeview_uebersicht.heading("API_call", text="API Call")
 
         # Spaltenbreiten und Ausrichtung
         app_state.treeview_uebersicht.column("Nr", width=30, anchor="center", stretch=False)
-        app_state.treeview_uebersicht.column("Typ", width=130, anchor="w")
-        app_state.treeview_uebersicht.column("Anzahl", width=80, anchor="center", stretch=False)
+        app_state.treeview_uebersicht.column("Typ", width=120, anchor="center")
+        app_state.treeview_uebersicht.column("Anzahl", width=50, anchor="center", stretch=False)
         app_state.treeview_uebersicht.column("Testkunde", width=80, anchor="center")
-        app_state.treeview_uebersicht.column("Versand unterdrückt", width=150, anchor="center")
-        app_state.treeview_uebersicht.column("Kündigungsgrund", width=150, anchor="w")
+        app_state.treeview_uebersicht.column("Versand unterdrückt", width=100, anchor="center")
+        app_state.treeview_uebersicht.column("Kündigungsgrund", width=130, anchor="center")
+        app_state.treeview_uebersicht.column("custom_bestellID", width=100, anchor="center")
+        app_state.treeview_uebersicht.column("API_call", width=40, anchor="center")
 
 
         # Tabelle anzeigen
