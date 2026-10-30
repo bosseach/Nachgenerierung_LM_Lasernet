@@ -2,6 +2,8 @@
 import pandas as pd
 from datetime import datetime, timedelta
 import tkinter as tk
+from ttkbootstrap import ScrolledText
+import ttkbootstrap as ttk
 import logging
 import requests
 
@@ -162,6 +164,9 @@ def update_state(
     file_button_kuen,
     listbox2
 ):
+    '''
+    Die Funktion limiert die Änderungen von Kündigungsgründen auf das Dokument Kündigungsbestätigung
+    '''
     if auswahl_dropdown.get() == "Kündigungsbestätigungen":
         state = "normal"
     else:
@@ -177,29 +182,82 @@ def update_state(
 # Sonstige
 # ======================================================================================
 
-def open_dokumentation():
-    text_var = ('''Das Tool generiert einen Subscriptions- und einen Accountreport für \ndie Erstellung der Auftragsbestätigungen via Lasernet. 
-            \n- Als Input dienen BestellIds für die zu erstellenden Aufträge, \nMehrere IDs sind durch Komma zu trennen. 
-            \n- Ablage der Reports \\vm-it-zen-shd-2.aschendorff.net\Lesermarkt-PROD\CSV\CSV_IN 
-            \n- Lasernet startet jeden Tag um 20:00 einen Lauf und prüft ob Reports dort abgelegt wurden und verarbeitet diese. 
-            \n- Es besteht die Möglichkeit mit der Funktion "Testfall eintragen" \neinen Test zu generieren, dann werden alle personenbezogenen Daten \nder Bestellungen auf eine zu wählende PayerID geändert, dies erlaubt \ndie Kontrolle und das Testen von Auftragsbestätigungen.
-            \n- Mit "Versand unterdrücken" kann der e-Mail und Postversand der Subscriptions unterdrückt werden. 
-                    ''')
+def open_dokumentation(parent):
+    text_var = """
+    Das Tool generiert einen Subscriptions- und einen Accountreport für
+    die Erstellung der Auftragsbestätigungen via Lasernet.
 
-    root_doku = tk.Tk()
-    root_doku.wm_title('Dokumentation')
-    root_doku.geometry("600x300")
+    ##### Prozess #####
+    - Lasernet startet jeden Tag zwei Läufe zum Erstellen der Auftrags- und Kündigungsbestätigungen.
+      Einen morgen zum Verarbeiten der Daten des Vortages und einen Abends um 20 Uhr der für Korrekturen und
+      Test ist. Beide verarbeiten die Daten identisch
 
-    doku_tk = tk.Text(root_doku, height=40, width=70)
-    doku_tk.grid(row=1, column=0)
-    doku_tk.insert(1.0, text_var)
-    doku_tk.config(state='disable')
+    - Das Tool ermöglicht das Erstellen der entsprechenden Reports, inkl. unterschiedlicher Fälle. 
 
-    root_doku.mainloop()
+    - Die entsprechenden Reports müssen unter dem folgenden Verzeichnis abgelegt werden:
+        \\\\vm-it-zen-shd-2.aschendorff.net\\Lesermarkt-PROD\\CSV\\CSV_IN
+    
+    #### Bedienung ####
+    - Als Input dienen SubscriptionsIDs für die zu erstellenden Aufträge, Seite "Dokumente erstellen".
+      Das Tool ermittelt für gültige BestellIDs (Bestellid <> leer) die entsprechend benötigten Subscriptions. 
+      * Bei leeren Bestellids werden keine zusätzlichen Subscriptions ermittelt. 
+      * Für jede Bestellid bitte nur eine Subscription angeben. 
+      * "ID speichert" speichert alle eingetragenen IDs als einen zu bearbeitenden Fall ab und leer alle Felder 
+            für eine erneute Eingabe.
+      * Mehrere Subscriptionid können kommasepariert eingegeben werden. Sie gelten dann als ein Bearbeitungsfall.
+      * Der ausgewählte Dokumententyp und die gewählten Änderungsoptionen gelten für alle in einem Bearbeitungsfall
+           enthaltenen Bestellungen.
+
+    - Auf der Seite "Übersicht/Download" findet sich eine Übersicht der bisher gespeicherten Bearbeitungsfälle, inkl.
+      ihrer Verarbeitungsoptionen, sowie die Option zum Erstellen der Reports.
+
+    - Das Tool ändert die Daten des Subscriptionsreport so ab, dass die zu den gewählten Fällen AB und KB passen
+      und auf normalen Weg im nächsten Abendlauf verarbeitet werden können. Für den Fall, dass eine Bearbeitung 
+      unterbleiben ssoll gibt es die Option "Keine Bearbeitung".
+
+    - Es gibt darüberhinaus die Möglichkeit einige Daten gezielt anzupassen:
+        1. API: Updated die Subscriptions direkt aus der eSuie statt aus der ATLAS DB. Für den Fall von Schiefständen
+            durch z.B Verschieben des Startdatums.
+        2. PayerID: Es kann eine neue Payer ID als Ziel für die AB/KB angegeben werden. Z.b Für Testfällen.
+        3. Versand unterdrücken: Der Versand kann variabel unterdrückt werden.
+        4. Neue Bestellid: Es können neue Bestellids angegeben werden. Es findet hierbei keine Änderung in der ATLAS DB
+           oder in der eSuite statt.
+        5. Neue Kündigungsgründe. Bei Kündigungen kann ein neuer Kündigungsgrund hinterlegt werden. 
+    """
+
+    # Fenster erstellen
+    root_doku = ttk.Toplevel(title="Dokumentation")
+    root_doku.geometry("700x400")
+    root_doku.resizable(True, True)
+
+    # Fenster vor dem Hauptfenster halten
+    root_doku.transient(root_doku.master)
+    root_doku.grab_set()
+
+    doku_text = ScrolledText(
+        root_doku,
+        height=20,
+        width=80,
+        wrap="word",
+        autohide=True,
+        padding=10,
+    )
+    doku_text.pack(fill="both", expand=True, padx=10, pady=10)
+
+    doku_text.insert("1.0", text_var)
+    doku_text.configure(state="disabled")
+
+    close_button = ttk.Button(
+        root_doku,
+        text="Schließen",
+        bootstyle="secondary",
+        command=root_doku.destroy
+    )
+    close_button.pack(pady=(0, 10))
 
 def showdata_treeview(treeview_data, shared_data):
     """
-    Befüllt ein ttk.Treeview mit den Daten aus shared_data.
+    Ermöglicht das Anzeigen der zu bearbeitenden Fälle in einer Treeview Tabelle
     """
     # treeview als anzuzeigendes Objekt, shared Data als Daten
     # Löschen der bisherigen Anzeige
@@ -271,6 +329,9 @@ def Umwandeln_BestellID(df_sub, new_id):
     return df_sub
 
 def get_api_call(url, HEADERS_PROD, logging, choose_header=None):
+    '''
+    Die Funktion führt einen standardisierten API Call durch
+    '''
     if choose_header is None:
         choose_header = HEADERS_PROD
 
@@ -291,8 +352,12 @@ def get_api_call(url, HEADERS_PROD, logging, choose_header=None):
 def Generiere_Reports(
     folder_data,
     shared_data,
-    logger
+    logger,
+    parent
 ):
+    '''
+    Zentrale Funktion Steuern der Datenabfragen der ATLAS DB und deren Anpassungen
+    '''
     start_time = datetime.now()
 
     if len(folder_data.get()) == 0:
@@ -342,22 +407,30 @@ def Generiere_Reports(
 
     endtime = datetime.now()
 
-    root2 = tk.Tk()
-    root2.wm_title('Result')
-    root2.geometry("200x100")
+    # Ergebnisfenster
+    root_result = ttk.Toplevel(title="Ergebnis")
+    root_result.geometry("200x100")
+    root_result.resizable(True, True)
 
-    result_text = tk.Label(
-        root2,
+    # Fenster vor dem Hauptfenster halten
+    root_result.transient(root_result.master)
+    root_result.grab_set()
+
+    result_text = ttk.Label(
+        root_result,
         text=f'Die Testdaten sind erstellt worden \n Laufzeit: {(endtime-start_time).seconds} Sekunden'
     )
     result_text.grid(row=1, column=1)
 
-    root2.mainloop()
+    #root2.mainloop()
 
 def Allg_Verarbeitung(
     item,
     logger
     ):
+    '''
+    Ermittelt die Bestellungen aus dem Subscriptionreport und die Dokumentenunabhängigen Anpassungen
+    '''
     # ==================
     # Bestellungen bilden
     # ==================
@@ -453,6 +526,9 @@ def AB_KB_Verarbeitung(
     item,
     typ
     ):
+    '''
+    Funktion ermittelt die zu den Bestellungen gehörenden GPs und bildet den Accountreport. Ebenso werden Dokumentenspezifische Anpassungen durchgeführt
+    '''
     # ==================
     # Accountreport bilden
     # ==================
